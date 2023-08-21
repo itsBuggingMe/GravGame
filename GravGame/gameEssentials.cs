@@ -151,7 +151,6 @@ namespace GravGame
                 }
             }
         }
-
     }
     public class Camera
     {
@@ -197,6 +196,14 @@ namespace GravGame
         {
             Zoom *= zoom;
             Zoom = Math.Max(Zoom, 0.00001f);
+        }
+    }
+
+    public static class mathFunc
+    {
+        public static float normailise(float max, float min, float value)
+        {
+            return (Math.Max(min, Math.Min(max, value)) - min) / (max - min);
         }
     }
 

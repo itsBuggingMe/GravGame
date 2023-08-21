@@ -99,7 +99,17 @@ namespace GravGame
                         this.mass += planets[i].mass;
                         this.planetRadius = diaGivenVol(mass);
 
-                        //this.planetColor = weightedAverageColor(this.planetColor, mass, planets[i].planetColor, planets[i].mass);
+                        if (mass >= 1024)
+                        {
+                            if (mass < 3072)
+                            {
+                                planetColor = Color.Lerp(Color.Yellow, Color.LightGoldenrodYellow, mathFunc.normailise(3072, 1024, mass));
+                            }
+                            else
+                            {
+                                planetColor = Color.Lerp(Color.LightGoldenrodYellow, new Color(60, 255, 255), mathFunc.normailise(4096, 3072, mass));
+                            }
+                        }
                         planets[i].remove = true;
                     }
                 }
@@ -112,6 +122,11 @@ namespace GravGame
 
             shapeBatch.FillCircle(camera.WorldToScreen(location), planetRadius * camera.Zoom, planetColor);
 
+        }
+
+        public void drawLines(ShapeBatch shapeBatch, Camera camera)
+        {
+
             for (int i = 0; i < locationBuffer.Length - 1; i++)
             {
                 int currentIndex = (bufferIndex + i) % locationBuffer.Length;
@@ -120,7 +135,7 @@ namespace GravGame
 
                 float opacity = 1;
                 int threshhold = 7200;
-                if(i < threshhold)
+                if (i < threshhold)
                 {
                     float x = (i / (float)threshhold);
                     opacity = x * x;
@@ -131,16 +146,6 @@ namespace GravGame
 
             int lastIndex = (bufferIndex + locationBuffer.Length - 1) % locationBuffer.Length;
             shapeBatch.FillLine(camera.WorldToScreen(locationBuffer[lastIndex]), camera.WorldToScreen(location), 1, planetColor);
-        }
-
-        public void drawFuturePositions(ShapeBatch shapeBatch, Camera camera)
-        {
-            shapeBatch.FillCircle(camera.WorldToScreen(location), planetRadius * camera.Zoom, planetColor);
-
-            for (int i = 0; i < futurePositions.Count-1; i++)
-            {
-                shapeBatch.FillLine(camera.WorldToScreen(locationBuffer[i]), camera.WorldToScreen(locationBuffer[i+1]), 1, planetColor);
-            }
         }
 
         public void drawNoLines(ShapeBatch shapeBatch, Camera camera)

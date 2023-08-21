@@ -67,6 +67,8 @@ namespace GravGame
             if(keyPress(Keys.K))
             {
                 planets.Clear();
+                activePlanet = -1;
+                focusPlanet = -1;
             }
 
             if (!pause)
@@ -93,14 +95,22 @@ namespace GravGame
             {
                 foreach (planet planet in planets)
                 {
-                    planet.draw(drawing.shapeBatch, drawing.camera);
+                    planet.drawLines(drawing.shapeBatch, drawing.camera);
+                }
+                foreach (planet planet in planets)
+                {
+                    planet.drawNoLines(drawing.shapeBatch, drawing.camera);
                 }
             }
             else
             {
                 foreach (planet planet in pretendPlanets)
                 {
-                    planet.draw(drawing.shapeBatch, drawing.camera);
+                    planet.drawLines(drawing.shapeBatch, drawing.camera);
+                }
+                foreach (planet planet in pretendPlanets)
+                {
+                    planet.drawNoLines(drawing.shapeBatch, drawing.camera);
                 }
             }
             if(playerController)
@@ -124,9 +134,22 @@ namespace GravGame
                 }
                 */
 
+                
                 Color randColor = planetColors[colorIndex];
                 colorIndex++;
                 colorIndex %= planetColors.Length;
+                if(planetMass >= 1024)
+                {
+                    if(planetMass < 3072)
+                    {
+                        randColor = Color.Lerp(Color.Yellow, Color.LightGoldenrodYellow, mathFunc.normailise(3072, 1024, planetMass));
+                    }
+                    else
+                    {
+                        randColor = Color.Lerp(Color.LightGoldenrodYellow, new Color(60, 255, 255), mathFunc.normailise(4096, 3072, planetMass));
+                    }
+                }
+
 
                 planets.Add(new planet(
                     camera.ScreenToWorld(mouseState.Position.ToVector2()),
@@ -153,10 +176,11 @@ namespace GravGame
 
                 for (int i = 0; i < planet.locationBufferSize; i++)
                 {
-                    for (int j = pretendPlanets.Count - 1; j >= 0; j--)
+                    foreach (planet pretendPlanet in pretendPlanets)
                     {
-                        pretendPlanets[j].calculateVectors(pretendPlanets);
+                        pretendPlanet.calculateVectors(pretendPlanets);
                     }
+
 
                     bool colorChanged = false;
                     for (int j = pretendPlanets.Count - 1; j >= 0; j--)
@@ -172,9 +196,9 @@ namespace GravGame
                         break;
                     }
 
-                    for (int j = pretendPlanets.Count - 1; j >= 0; j--)
+                    foreach (planet pretendPlanet in pretendPlanets)
                     {
-                        pretendPlanets[j].tickStep();
+                        pretendPlanet.tickStep();
                     }
                 }
             }
