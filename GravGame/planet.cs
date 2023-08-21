@@ -7,7 +7,8 @@ using Microsoft.Xna.Framework;
 using Apos.Shapes;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Diagnostics;
+using Microsoft.Xna.Framework.Input;
 namespace GravGame
 {
     internal class planet
@@ -17,9 +18,9 @@ namespace GravGame
         public Vector2 location;
         public Vector2 momentum;
         public float mass;
-        const float G = 64;
+        const float G = 16;
         float planetRadius;
-        Color planetColor;
+        public Color planetColor;
 
         public const int locationBufferSize = 7200;
 
@@ -29,7 +30,7 @@ namespace GravGame
         int bufferIndex = 0;
 
         int ticks = 0;
-
+        public bool remove = false;
 
         public planet(Vector2 location, float mass, Vector2 momentum, Color color)
         {
@@ -87,7 +88,10 @@ namespace GravGame
             {
                 if(this != planets[i])
                 {
-                    float distance = Vector2.Distance(planets[i].location, this.location);
+                    momentum += calculateGravitationalForce(this, planets[i].location, planets[i].mass) / mass;
+
+                    Vector2 potentialLocation = location + momentum;
+                    float distance = Vector2.Distance(planets[i].location, potentialLocation);
                     float collisionDistance = planetRadius + planets[i].planetRadius;
                     
                     if(distance < collisionDistance && this.mass >= planets[i].mass)
@@ -96,11 +100,7 @@ namespace GravGame
                         this.planetRadius = diaGivenVol(mass);
 
                         //this.planetColor = weightedAverageColor(this.planetColor, mass, planets[i].planetColor, planets[i].mass);
-                        planets.RemoveAt(i);
-                    }
-                    else
-                    {
-                        momentum += calculateGravitationalForce(this, planets[i].location, planets[i].mass) / mass;
+                        planets[i].remove = true;
                     }
                 }
             }
@@ -108,13 +108,25 @@ namespace GravGame
 
         public void draw(ShapeBatch shapeBatch, Camera camera)
         {
+
+
             shapeBatch.FillCircle(camera.WorldToScreen(location), planetRadius * camera.Zoom, planetColor);
 
             for (int i = 0; i < locationBuffer.Length - 1; i++)
             {
                 int currentIndex = (bufferIndex + i) % locationBuffer.Length;
                 int nextIndex = (currentIndex + 1) % locationBuffer.Length;
-                shapeBatch.FillLine(camera.WorldToScreen(locationBuffer[currentIndex]), camera.WorldToScreen(locationBuffer[nextIndex]), 1, planetColor);
+
+
+                float opacity = 1;
+                int threshhold = 7200;
+                if(i < threshhold)
+                {
+                    float x = (i / (float)threshhold);
+                    opacity = x * x;
+                }
+                ticks++;
+                shapeBatch.FillLine(camera.WorldToScreen(locationBuffer[currentIndex]), camera.WorldToScreen(locationBuffer[nextIndex]), camera.Zoom * 0.6f, planetColor * opacity);
             }
 
             int lastIndex = (bufferIndex + locationBuffer.Length - 1) % locationBuffer.Length;

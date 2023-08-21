@@ -71,7 +71,7 @@ namespace GravGame
 
             drawing.shapeBatch.End();
             drawing.spriteBatch.End();
-
+            
 
             Texture2D bloom = drawing._bloomFilter.Draw(preBloom, drawing.fullScreenSize.X, drawing.fullScreenSize.Y);
 
@@ -81,7 +81,7 @@ namespace GravGame
             drawing.spriteBatch.Draw(bloom, Vector2.Zero, Color.White);
             drawing.textBuffer.draw();
             drawing.spriteBatch.End();
-
+            
             base.Draw(gameTime);
         }
     }

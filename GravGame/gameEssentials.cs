@@ -37,6 +37,7 @@ namespace GravGame
             _bloomFilter = new BloomFilter();
             _bloomFilter.Load(game.GraphicsDevice, game.Content, fullScreenSize.X, fullScreenSize.Y);
             _bloomFilter.BloomPreset = BloomFilter.BloomPresets.Focussed;
+            _bloomFilter.BloomThreshold = 0;
 
             effects = new Effects();
             sounds = new SoundFX();

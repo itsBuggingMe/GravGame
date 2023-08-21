@@ -33,7 +33,8 @@ namespace GravGame
 
         float planetMass = 25;
 
-        Color[] planetColors = new Color[] { Color.Green, Color.Gray, Color.Blue, Color.Aqua, Color.CornflowerBlue, Color.DarkOliveGreen, Color.DarkOrange, new Color(105, 68, 8), new Color(235, 152, 19) };
+        Color[] planetColors = new Color[] { Color.Lime,Color.Aqua, new Color(235, 152, 19), Color.Magenta};
+        int colorIndex;
 
         public starSystem(Drawing drawing, List<planet> planets) 
         { 
@@ -42,7 +43,8 @@ namespace GravGame
             this.ship = new Ship(drawing.fullScreenSize.ToVector2()/2f, 1, Vector2.Zero, Color.Gray);
             this.camera = drawing.camera;
             camera.SetZoom(0.1f);
-            planets.Add(new planet(drawing.fullScreenSize.ToVector2() / 2f, 4096, Vector2.Zero, Color.Yellow));
+            colorIndex = random.Next(planetColors.Length);
+            planets.Add(new planet(drawing.fullScreenSize.ToVector2() / 2f, 1024, Vector2.Zero, Color.Yellow));
         }
 
         MouseState mouseState = Mouse.GetState();
@@ -83,7 +85,6 @@ namespace GravGame
             {
                 genericInput();
             }
-
         }
 
         public void draw()
@@ -123,7 +124,9 @@ namespace GravGame
                 }
                 */
 
-                Color randColor = planetColors[random.Next(planetColors.Length)];
+                Color randColor = planetColors[colorIndex];
+                colorIndex++;
+                colorIndex %= planetColors.Length;
 
                 planets.Add(new planet(
                     camera.ScreenToWorld(mouseState.Position.ToVector2()),
@@ -150,20 +153,28 @@ namespace GravGame
 
                 for (int i = 0; i < planet.locationBufferSize; i++)
                 {
-                    int planetListSize = pretendPlanets.Count;
                     for (int j = pretendPlanets.Count - 1; j >= 0; j--)
                     {
                         pretendPlanets[j].calculateVectors(pretendPlanets);
                     }
 
+                    bool colorChanged = false;
+                    for (int j = pretendPlanets.Count - 1; j >= 0; j--)
+                    {
+                        if (pretendPlanets[j].remove)
+                        {
+                            pretendPlanets[j].planetColor = new Color(255, 49, 49);
+                            colorChanged = true;
+                        }
+                    }
+                    if (colorChanged)
+                    {
+                        break;
+                    }
+
                     for (int j = pretendPlanets.Count - 1; j >= 0; j--)
                     {
                         pretendPlanets[j].tickStep();
-                    }
-
-                    if(planetListSize != pretendPlanets.Count)
-                    {
-                        break;
                     }
                 }
             }
@@ -174,7 +185,10 @@ namespace GravGame
                 {
                     focusPlanet = -1;
                 }
-                camera.SetLocation(planets[focusPlanet].location);
+                else
+                {
+                    camera.SetLocation(planets[focusPlanet].location);
+                }
             }
 
             if (rightMouseRelease())
@@ -252,12 +266,12 @@ namespace GravGame
 
             if (keyboardState.IsKeyDown(Keys.Left))
             {
-                simulationSpeed *= 1.6f;
+                simulationSpeed *= 1.04f;
                 simulationSpeed = (float)Math.Clamp(Math.Round(simulationSpeed, 2), 1, 512);
             }
             if (keyboardState.IsKeyDown(Keys.Right))
             {
-                simulationSpeed *= 0.94f;
+                simulationSpeed *= 0.8f;
                 simulationSpeed = (float)Math.Clamp(Math.Round(simulationSpeed, 2), 1, 512);
             }
 
@@ -327,6 +341,14 @@ namespace GravGame
                 planet.tickStep();
             }
             ship.tickStep();
+
+            for (int j = planets.Count - 1; j >= 0; j--)
+            {
+                if (planets[j].remove)
+                {
+                    planets.RemoveAt(j);
+                }
+            }
         }
 
         public bool leftMouseClick()
