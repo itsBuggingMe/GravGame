@@ -18,14 +18,14 @@ namespace GravGame
         public Vector2 location;
         public Vector2 momentum;
         public float mass;
-        const float G = 16;
+        const float G = 64;
         float planetRadius;
         public Color planetColor;
 
-        public const int locationBufferSize = 7200;
+        public const int locationBufferSize = 1200;
+        public const int locationSampleInterval = 15;
 
         Vector2[] locationBuffer = new Vector2[locationBufferSize];
-        List<Vector2> futurePositions = new List<Vector2>();
 
         int bufferIndex = 0;
 
@@ -69,18 +69,20 @@ namespace GravGame
             location += momentum;
             ticks++;
 
-            locationBuffer[bufferIndex] = location;
-            bufferIndex = (bufferIndex + 1) % locationBufferSize;
+            if(ticks % locationSampleInterval == 0)
+            {
+                locationBuffer[bufferIndex] = location;
+                bufferIndex = (bufferIndex + 1) % locationBufferSize;
+            }
         }
 
-        public void tickStepPreciction()
+        public void resetLocationBuffer()
         {
-            location += momentum;
-            ticks++;
-
-            futurePositions.Add(location);
+            for (int i = 0; i < locationBufferSize; i++)
+            {
+                locationBuffer[i] = location;
+            }
         }
-
 
         public void calculateVectors(List<planet> planets)
         {
@@ -107,7 +109,7 @@ namespace GravGame
                             }
                             else
                             {
-                                planetColor = Color.Lerp(Color.LightGoldenrodYellow, new Color(60, 255, 255), mathFunc.normailise(4096, 3072, mass));
+                                planetColor = Color.Lerp(Color.LightGoldenrodYellow, new Color(120, 255, 255), mathFunc.normailise(4096, 3072, mass));
                             }
                         }
                         planets[i].remove = true;
@@ -118,15 +120,6 @@ namespace GravGame
 
         public void draw(ShapeBatch shapeBatch, Camera camera)
         {
-
-
-            shapeBatch.FillCircle(camera.WorldToScreen(location), planetRadius * camera.Zoom, planetColor);
-
-        }
-
-        public void drawLines(ShapeBatch shapeBatch, Camera camera)
-        {
-
             for (int i = 0; i < locationBuffer.Length - 1; i++)
             {
                 int currentIndex = (bufferIndex + i) % locationBuffer.Length;
@@ -146,6 +139,35 @@ namespace GravGame
 
             int lastIndex = (bufferIndex + locationBuffer.Length - 1) % locationBuffer.Length;
             shapeBatch.FillLine(camera.WorldToScreen(locationBuffer[lastIndex]), camera.WorldToScreen(location), 1, planetColor);
+
+
+            shapeBatch.FillCircle(camera.WorldToScreen(location), planetRadius * camera.Zoom, planetColor);
+        }
+
+        public void drawLines(ShapeBatch shapeBatch, Camera camera)
+        {
+            float lineThickness = camera.Zoom * 0.6f;
+            for (int i = 0; i < locationBuffer.Length - 1; i++)
+            {
+                int currentIndex = (bufferIndex + i) % locationBuffer.Length;
+                int nextIndex = (currentIndex + 1) % locationBuffer.Length;
+
+                /*
+                float opacity = 1;
+                int threshhold = 7200;
+                if (i < threshhold)
+                {
+                    float x = (i / (float)threshhold);
+                    opacity = x * x;
+                }
+                ticks++;*/
+
+
+                shapeBatch.FillLine(camera.WorldToScreen(locationBuffer[currentIndex]), camera.WorldToScreen(locationBuffer[nextIndex]), camera.Zoom * 0.6f, planetColor);
+            }
+
+            int lastIndex = (bufferIndex + locationBuffer.Length - 1) % locationBuffer.Length;
+            shapeBatch.FillLine(camera.WorldToScreen(locationBuffer[lastIndex]), camera.WorldToScreen(location), camera.Zoom * 0.6f, planetColor);
         }
 
         public void drawNoLines(ShapeBatch shapeBatch, Camera camera)
@@ -161,11 +183,14 @@ namespace GravGame
 
             return direction * factor;
         }
-        private static float diaGivenVol(float vol)
+        private static float diaGivenVol(float area)
         {
-            return (3 * vol / 4 * MathF.PI) / 2f;
-        }
+            // The formula for calculating diameter from surface area of a sphere is:
+            // diameter = sqrt((4 * area) / π)
 
+            float diameter = MathF.Sqrt((4 * area) / MathF.PI);
+            return diameter * 32;//g * 2 8 * 2
+        }
         public static Color weightedAverageColor(Color color1, double weight1, Color color2, double weight2)
         {
 

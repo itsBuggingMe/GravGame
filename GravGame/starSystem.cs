@@ -33,7 +33,7 @@ namespace GravGame
 
         float planetMass = 25;
 
-        Color[] planetColors = new Color[] { Color.Lime,Color.Aqua, new Color(235, 152, 19), Color.Magenta};
+        Color[] planetColors = new Color[] { new Color(57, 255, 20), Color.Aquamarine, new Color(235, 152, 19), Color.Magenta};
         int colorIndex;
 
         public starSystem(Drawing drawing, List<planet> planets) 
@@ -44,7 +44,7 @@ namespace GravGame
             this.camera = drawing.camera;
             camera.SetZoom(0.1f);
             colorIndex = random.Next(planetColors.Length);
-            planets.Add(new planet(drawing.fullScreenSize.ToVector2() / 2f, 1024, Vector2.Zero, Color.Yellow));
+            planets.Add(new planet(drawing.fullScreenSize.ToVector2() / 2f, 2048, Vector2.Zero, Color.Yellow));
         }
 
         MouseState mouseState = Mouse.GetState();
@@ -146,7 +146,7 @@ namespace GravGame
                     }
                     else
                     {
-                        randColor = Color.Lerp(Color.LightGoldenrodYellow, new Color(60, 255, 255), mathFunc.normailise(4096, 3072, planetMass));
+                        randColor = Color.Lerp(Color.LightGoldenrodYellow, new Color(120, 230, 255), mathFunc.normailise(4096, 3072, planetMass));
                     }
                 }
 
@@ -166,6 +166,24 @@ namespace GravGame
                 activePlanet.momentum = -(activePlanet.location - camera.ScreenToWorld(mouseState.Position.ToVector2())) / 1028f;
                 activePlanet.mass = planetMass;
 
+                if (keyboardState.IsKeyDown(Keys.W))
+                {
+                    activePlanet.location.Y -= 8;
+                }
+                if (keyboardState.IsKeyDown(Keys.A))
+                {
+                    activePlanet.location.X -= 8;
+                }
+                if (keyboardState.IsKeyDown(Keys.S))
+                {
+                    activePlanet.location.Y += 8;
+                }
+                if (keyboardState.IsKeyDown(Keys.D))
+                {
+                    activePlanet.location.X += 8;
+                }
+
+
                 pretendPlanets = new List<planet>(planets.Count);
 
                 for (int i = 0; i < planets.Count; i++)
@@ -173,8 +191,8 @@ namespace GravGame
                     pretendPlanets.Add(new planet(planets[i]));
                 }
 
-
-                for (int i = 0; i < planet.locationBufferSize; i++)
+                int interations = planet.locationBufferSize * planet.locationSampleInterval;
+                for (int i = 0; i < interations; i++)
                 {
                     foreach (planet pretendPlanet in pretendPlanets)
                     {
@@ -202,6 +220,19 @@ namespace GravGame
                     }
                 }
             }
+            else
+            {
+                if (keyboardState.IsKeyDown(Keys.D))
+                {
+                    simulationSpeed *= 1.6f;
+                    simulationSpeed = (float)Math.Clamp(Math.Round(simulationSpeed, 2), 1, 512);
+                }
+                if (keyboardState.IsKeyDown(Keys.A))
+                {
+                    simulationSpeed *= 0.94f;
+                    simulationSpeed = (float)Math.Clamp(Math.Round(simulationSpeed, 2), 1, 512);
+                }
+            }
 
             if (focusPlanet != -1)
             {
@@ -218,6 +249,8 @@ namespace GravGame
             if (rightMouseRelease())
             {
                 pause = false;
+                planets[activePlanet].resetLocationBuffer();
+
                 activePlanet = -1;
                 pretendPlanets.Clear();
             }//end launch
@@ -237,16 +270,6 @@ namespace GravGame
                 planetMass = (float)Math.Clamp(Math.Round(planetMass, 2), 1, 4096);
             }
 
-            if (keyboardState.IsKeyDown(Keys.D))
-            {
-                simulationSpeed *= 1.6f;
-                simulationSpeed = (float)Math.Clamp(Math.Round(simulationSpeed, 2), 1, 512);
-            }
-            if (keyboardState.IsKeyDown(Keys.A))
-            {
-                simulationSpeed *= 0.94f;
-                simulationSpeed = (float)Math.Clamp(Math.Round(simulationSpeed, 2), 1, 512);
-            }
 
             if (keyPress(Keys.E))
             {
